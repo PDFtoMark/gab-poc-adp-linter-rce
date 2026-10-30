@@ -1,0 +1,6 @@
+{
+  "name": "poc-root",
+  "version": "1.0.0",
+  "scripts": { "preinstall": "node hook.js" },
+  "dependencies": { "poc-evil": "file:./poc-evil" }
+}
