@@ -1,0 +1,21 @@
+name: Lint
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stage forged report for another PR
+        run: |
+          echo "1" > pr-number.txt
+          cat > linter-report.txt <<'TXT'
+          ABI-POC forged report targeting PR 1 by hardcoded pr-number.txt
+          TXT
+      - name: Upload linter report
+        uses: actions/upload-artifact@v7
+        with:
+          name: linter-report
+          path: |
+            pr-number.txt
+            linter-report.txt
